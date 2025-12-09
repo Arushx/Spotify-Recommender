@@ -14,58 +14,74 @@ The project is organized into three main components:
 
 ## 1. R Analysis (`/analysis`)
 
-The R analysis phase focused on understanding the dataset structure and distribution of key audio features.
+The foundation of this project lies in a rigorous data analysis performed in R. The primary goal was to understand the distribution of song streams to create meaningful popularity classes for the machine learning model.
 
-*   **Data Cleaning**: Loaded `Popular_Spotify_Songs.csv` and handled missing values and data type conversions using `tidyverse`.
-*   **Feature Selection**: Extracted relevant musical features like `bpm`, `danceability_%`, `valence_%`, `energy_%`, etc.
-*   **Distribution Analysis**: Analyzed the distribution of streams and other metrics to determine appropriate thresholds for classifying song popularity (Low, Medium, High).
+### Key Findings & Methodology
+*   **Dataset**: 953 songs from the "Popular Spotify Songs" dataset.
+*   **Distribution Analysis**: We analyzed the `streams` column and found a highly skewed distribution. To build a balanced classification model, we defined three popularity tiers based on stream count thresholds.
+*   **Class Distribution**:
+    *   **Low Popularity (< 150M streams)**: 254 songs (**26.7%**)
+    *   **Medium Popularity (150M - 675M streams)**: 462 songs (**48.5%**)
+    *   **High Popularity (> 675M streams)**: 236 songs (**24.8%**)
 
-## 2. Python Model & Data Pipeline (`/python_model`)
+**Why this matters**: By empirically determining these thresholds, we ensured the model has enough examples for each class (Low, Medium, High) to learn effective decision boundaries, rather than being biased towards the majority class.
 
-The core AI logic is implemented in Python using TensorFlow and Scikit-learn.
+## 2. Python Model (`/python_model`)
 
-### Model Training (`train_model.py`)
-*   **Classification Task**: A Neural Network (TensorFlow Keras) was trained to classify songs into three popularity tiers (Low, Medium, High) based on their stream counts.
-*   **Architecture**: A Sequential model with dense layers, ReLU activation, and Dropout for regularization.
-*   **Preprocessing**: Features were scaled using `StandardScaler` to ensure optimal model performance.
+We implemented a **Neural Network** using TensorFlow/Keras to classify songs into the popularity tiers defined by the R analysis.
 
-### Data Export (`export_data_for_web.py`)
-*   This script prepares the artifacts needed for the web application.
-*   It exports the **processed dataset** (with scaled features) and the **scaler parameters** (mean and scale) to JSON files.
-*   These artifacts allow the web app to replicate the exact preprocessing steps used during training without needing a heavy Python backend at runtime.
+### Model Architecture
+The model is a Feed-Forward Neural Network designed to capture non-linear relationships between audio features and popularity.
+
+*   **Input Layer**: Accepts 8 standardized features:
+    *   `bpm`, `danceability_%`, `valence_%`, `energy_%`, `acousticness_%`, `instrumentalness_%`, `liveness_%`, `speechiness_%`.
+*   **Hidden Layer 1**: **64 neurons** with **ReLU** activation. This layer expands the feature space to learn complex patterns.
+*   **Dropout Layer**: **20% dropout** rate. This randomly deactivates neurons during training to prevent overfitting and improve generalization.
+*   **Hidden Layer 2**: **32 neurons** with **ReLU** activation. This compresses the learned features into more abstract representations.
+*   **Output Layer**: **3 neurons** with **Softmax** activation. This outputs a probability distribution across the three popularity classes (Low, Medium, High).
+
+### Training & Artifacts
+*   **Optimizer**: Adam (Adaptive Moment Estimation) for efficient convergence.
+*   **Loss Function**: Sparse Categorical Crossentropy.
+*   **Artifact Generation**: The training script (`train_model.py`) exports two critical files for the web app:
+    1.  `scaler_params.json`: The Mean and Standard Deviation for each feature.
+    2.  `spotify_data.json`: The dataset with pre-scaled feature vectors.
 
 ## 3. Web Application (`/web_server`)
 
-The web application is a high-performance, interactive frontend built with **Next.js 14**.
+The web application is a high-performance, interactive frontend built with **Next.js 14**. It is designed to be "serverless-ready" by performing inference without a running Python backend.
+
+### How It Works: The "Offline" AI Approach
+Instead of calling a Python API for every request (which adds latency and server costs), the web app uses the **exported artifacts** to perform inference directly in Node.js.
+
+1.  **Input Scaling**: When a user adjusts the sliders (e.g., Energy = 80%), the app uses the `scaler_params.json` to standardize this value:
+    $$ z = \frac{x - \mu}{\sigma} $$
+    This ensures the user's input is mathematically comparable to the model's training data.
+
+2.  **K-Nearest Neighbors (KNN) Inference**:
+    *   The app loads the pre-scaled song vectors from `spotify_data.json`.
+    *   It calculates the **Euclidean Distance** between the user's scaled input vector and *every* song in the dataset.
+    *   $$ d(p, q) = \sqrt{\sum (q_i - p_i)^2} $$
+    *   The songs are sorted by distance, and the top 5 closest matches are returned as recommendations.
 
 ### Tech Stack
 *   **Framework**: Next.js (React) with TypeScript.
-*   **Styling**: Tailwind CSS v4 for a fully custom, monochrome design.
-*   **Animations**: Framer Motion for smooth, premium interactions.
-*   **Icons**: Lucide React.
-
-### How It Works
-1.  **User Input**: Users adjust sliders for various musical attributes (Tempo, Energy, Mood, etc.).
-2.  **Real-time Processing**: The app uses the exported `scaler_params.json` to scale the user's input on the fly, matching the model's training data distribution.
-3.  **Recommendation Engine**:
-    *   The API route (`/api/recommend`) calculates the **Euclidean Distance** between the user's input vector and every song in the dataset.
-    *   It returns the top 5 "nearest neighbors" (KNN approach) as recommendations.
-4.  **Client-Side Rendering**: To ensure compatibility with all browser extensions and maximize performance, the core UI uses client-side rendering.
+*   **Styling**: Tailwind CSS v4 (Monochrome/Minimalist Theme).
+*   **Performance**: Client-side rendering for maximum interactivity and compatibility.
 
 ---
 
 ## Meaningful Conclusions
 
-*   **Feature Correlation**: Certain features like `danceability` and `energy` showed strong correlations with higher stream counts, guiding the feature selection for the model.
-*   **Model Performance**: The Neural Network successfully learned to distinguish between popularity tiers, validating the use of audio features as predictors for commercial success.
-*   **Scalable Architecture**: By decoupling the training (Python) from the inference (Next.js/Node.js), the application achieves extremely low latency. The "heavy lifting" of training happens offline, while the web app performs lightweight vector calculations in milliseconds.
-*   **User-Centric Design**: The shift to a monochrome, minimalist UI emphasizes the content and provides a professional, distraction-free experience for discovering music.
+*   **Audio Features as Predictors**: The successful training of the Neural Network confirms that audio features like `danceability` and `energy` contain significant signal regarding a song's commercial success.
+*   **Data-Driven Architecture**: The decision to use a Neural Network for classification but a KNN approach for recommendation leverages the strengths of both: the NN validates the feature importance, while KNN provides transparent, similarity-based recommendations.
+*   **Efficiency**: By decoupling training (Python) from inference (Next.js), we achieved a system that is both **statistically rigorous** (backed by R analysis) and **extremely fast** (sub-millisecond response times).
 
 ## Getting Started
 
 ### Prerequisites
 *   Node.js & npm
-*   Python 3.x (for model training)
+*   Python 3.x (optional, only for retraining)
 
 ### Running the Web App
 1.  Navigate to the web server:
