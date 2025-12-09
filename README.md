@@ -23,12 +23,13 @@ The foundation of this project lies in a rigorous data analysis performed in R. 
     *   **Low Popularity (< 150M streams)**: 254 songs (**26.7%**)
     *   **Medium Popularity (150M - 675M streams)**: 462 songs (**48.5%**)
     *   **High Popularity (> 675M streams)**: 236 songs (**24.8%**)
+*   **Classification Model**: After running a classfication model on song's features (BPM) and qualities (danceibility and etc...) found a 60% correct prediction rate for stream class using a confusion matrix.
 
-**Why this matters**: By empirically determining these thresholds, we ensured the model has enough examples for each class (Low, Medium, High) to learn effective decision boundaries, rather than being biased towards the majority class.
+**Why this matters**: By empirically determining these thresholds, I ensured the model has enough examples for each class (Low, Medium, High). After running the classfication model, I found that a combination of features and qualities have predictive power so I used this information to make an actual neural network model with python
 
 ## 2. Python Model (`/python_model`)
 
-We implemented a **Neural Network** using TensorFlow/Keras to classify songs into the popularity tiers defined by the R analysis.
+Implemented a **Neural Network** using TensorFlow/Keras to classify songs into the popularity tiers defined by the R analysis.
 
 ### Model Architecture
 The model is a Feed-Forward Neural Network designed to capture non-linear relationships between audio features and popularity.
@@ -55,27 +56,23 @@ The web application is a high-performance, interactive frontend built with **Nex
 Instead of calling a Python API for every request (which adds latency and server costs), the web app uses the **exported artifacts** to perform inference directly in Node.js.
 
 1.  **Input Scaling**: When a user adjusts the sliders (e.g., Energy = 80%), the app uses the `scaler_params.json` to standardize this value:
-    $$ z = \frac{x - \mu}{\sigma} $$
     This ensures the user's input is mathematically comparable to the model's training data.
 
 2.  **K-Nearest Neighbors (KNN) Inference**:
     *   The app loads the pre-scaled song vectors from `spotify_data.json`.
     *   It calculates the **Euclidean Distance** between the user's scaled input vector and *every* song in the dataset.
-    *   $$ d(p, q) = \sqrt{\sum (q_i - p_i)^2} $$
     *   The songs are sorted by distance, and the top 5 closest matches are returned as recommendations.
 
 ### Tech Stack
 *   **Framework**: Next.js (React) with TypeScript.
-*   **Styling**: Tailwind CSS v4 (Monochrome/Minimalist Theme).
+*   **Styling**: Tailwind CSS v4
 *   **Performance**: Client-side rendering for maximum interactivity and compatibility.
 
 ---
-
 ## Meaningful Conclusions
-
 *   **Audio Features as Predictors**: The successful training of the Neural Network confirms that audio features like `danceability` and `energy` contain significant signal regarding a song's commercial success.
 *   **Data-Driven Architecture**: The decision to use a Neural Network for classification but a KNN approach for recommendation leverages the strengths of both: the NN validates the feature importance, while KNN provides transparent, similarity-based recommendations.
-*   **Efficiency**: By decoupling training (Python) from inference (Next.js), we achieved a system that is both **statistically rigorous** (backed by R analysis) and **extremely fast** (sub-millisecond response times).
+*   **Efficiency**: By decoupling training (Python) from inference (Next.js), I achieved a system that is both **statistically rigorous** (backed by R analysis) and **extremely fast** (sub-millisecond response times).
 
 ## Getting Started
 
