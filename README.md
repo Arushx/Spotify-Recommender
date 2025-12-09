@@ -18,7 +18,7 @@ The foundation of this project lies in a rigorous data analysis performed in R. 
 
 ### Key Findings & Methodology
 *   **Dataset**: 953 songs from the "Popular Spotify Songs" dataset.
-*   **Distribution Analysis**: We analyzed the `streams` column and found a highly skewed distribution. To build a balanced classification model, we defined three popularity tiers based on stream count thresholds.
+*   **Distribution Analysis**: I analyzed the `streams` column and found a highly skewed distribution. To build a balanced classification model, I defined three popularity tiers based on stream count thresholds.
 *   **Class Distribution**:
     *   **Low Popularity (< 150M streams)**: 254 songs (**26.7%**)
     *   **Medium Popularity (150M - 675M streams)**: 462 songs (**48.5%**)
