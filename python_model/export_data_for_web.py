@@ -25,10 +25,10 @@ scaler_params = {
 }
 
 # Ensure directory
-os.makedirs('web_app/frontend/data', exist_ok=True)
+os.makedirs('../web_server/data', exist_ok=True)
 
 # Save Scaler Params
-with open('web_app/frontend/data/scaler_params.json', 'w') as f:
+with open('../web_server/data/scaler_params.json', 'w') as f:
     json.dump(scaler_params, f)
 
 # Save Data (same as before)
@@ -36,6 +36,6 @@ cols_to_keep = [
     'track_name', 'artist(s)_name', 'released_year', 'streams',
     *feature_cols
 ]
-df[cols_to_keep].to_json('web_app/frontend/data/spotify_data.json', orient='records')
+df[cols_to_keep].to_json('../web_server/data/spotify_data.json', orient='records')
 
 print("Data and scaler params exported successfully.")
