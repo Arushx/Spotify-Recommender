@@ -23,9 +23,12 @@ The foundation of this project lies in a rigorous data analysis performed in R. 
     *   **Low Popularity (< 150M streams)**: 254 songs (**26.7%**)
     *   **Medium Popularity (150M - 675M streams)**: 462 songs (**48.5%**)
     *   **High Popularity (> 675M streams)**: 236 songs (**24.8%**)
-*   **Classification Model**: After running a classfication model on song's features (BPM) and qualities (danceibility and etc...) found a 60% correct prediction rate for stream class using a confusion matrix.
+*   **Model Iteration**:
+    *   **Model 1 (Aggregated Features)**: Attempted to predict popularity using a single `qual_factor` (average of audio qualities) along with BPM and Key. This yielded a low accuracy of **44.19%**, indicating that aggregating features loses critical information.
+    *   **Model 2 (Granular Features)**: Using individual features (Danceability, Energy, Valence, etc.) along with `artist_count` and `released_year` improved the accuracy to **60.85%**.
+*   **Conclusion**: Individual audio features have significant predictive power when treated separately. This insight drove the decision to use a Neural Network in Python with all 8 individual features for the final application.
 
-**Why this matters**: By empirically determining these thresholds, I ensured the model has enough examples for each class (Low, Medium, High). After running the classfication model, I found that a combination of features and qualities have predictive power so I used this information to make an actual neural network model with python
+**Why this matters**: By empirically determining these thresholds, I ensured the model has enough examples for each class. The R analysis proved that while no single feature guarantees a hit, the *combination* of specific audio characteristics is a strong predictor of commercial success (Stream Count).
 
 ## 2. Python Model (`/python_model`)
 
