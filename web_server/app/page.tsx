@@ -3,9 +3,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Music, Play, Disc, Activity, Zap, Heart, Mic, Sliders, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
-import { Inter } from 'next/font/google';
-
-const inter = Inter({ subsets: ['latin'] });
 
 interface Recommendation {
   track_name: string;
@@ -86,7 +83,7 @@ export default function Home() {
   if (!mounted) return null;
 
   return (
-    <main className={`min-h-screen ${inter.className} relative flex flex-col items-center py-20 px-4 bg-black text-white`}>
+    <main className={`min-h-screen relative flex flex-col items-center py-20 px-4 bg-black text-white`}>
 
       {/* Main Container - Centered and Contained */}
       <motion.div
