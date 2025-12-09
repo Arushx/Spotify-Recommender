@@ -97,7 +97,7 @@ export default function Home() {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-5xl md:text-6xl font-black tracking-tighter text-white mb-4">
-            VibeMatcher
+            SpotifyRec
           </h1>
           <p className="text-gray-400 text-lg font-medium max-w-lg mx-auto">
             KNN & Classification Tree Model Powered Song Recommender
