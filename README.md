@@ -97,3 +97,6 @@ Instead of calling a Python API for every request (which adds latency and server
     npm run dev
     ```
 4.  Open [http://localhost:3000](http://localhost:3000) (or the port shown in terminal).
+
+### FUTURE PLANS
+Use the dataset, https://www.kaggle.com/datasets/asaniczka/top-spotify-songs-in-73-countries-daily-updated/data, which has far more songs and then annotate then manually with an API to get BPM and other stats and then retrain the model on it.
