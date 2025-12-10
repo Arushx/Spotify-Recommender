@@ -4,13 +4,17 @@ import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import joblib
+import json
+import os
 
 print("Loading data...")
 # 1. Load Data
 try:
-    df = pd.read_csv('Popular_Spotify_Songs.csv', encoding='latin-1')
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    csv_path = os.path.join(script_dir, '../analysis/Popular_Spotify_Songs.csv')
+    df = pd.read_csv(csv_path, encoding='latin-1')
 except FileNotFoundError:
-    print("Error: csv not found")
+    print(f"Error: csv not found at {csv_path}")
     exit(1)
 
 # 2. Data Cleaning
@@ -77,21 +81,58 @@ history = model.fit(
 loss, accuracy = model.evaluate(X_test, y_test, verbose=0)
 print(f"Test Accuracy: {accuracy*100:.2f}%")
 
-# 6. Save Artifacts for Web App
+# 6. Save Artifacts
 print("Saving artifacts...")
 # Save the model
-model.save('spotify_model.keras')
+model_path = os.path.join(script_dir, 'spotify_model.keras')
+model.save(model_path)
 
-# Save the scaler (to scale user input later)
-joblib.dump(scaler, 'scaler.pkl')
+# Save the scaler (useful for future Python inference)
+scaler_path = os.path.join(script_dir, 'scaler.pkl')
+joblib.dump(scaler, scaler_path)
 
-# Save the processed dataframe (with track names and artists) for recommendations
-# We need the original data + the scaled features to calculate distance
-final_df = df.copy()
-# We want to save the SCALED features in the CSV so we don't have to scale every row during inference lookup
-# But we also need the metadata.
-# Let's replace the feature columns with their scaled values
-final_df[feature_cols] = scaler.transform(df[feature_cols]) 
-final_df.to_csv('processed_spotify_data.csv', index=False)
+# 7. Export Data for Web App (Next.js)
+print("Exporting data for Web App...")
+output_dir = os.path.join(script_dir, '../web_server/data')
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
 
-print("Model and data saved successfully!")
+# Export Scaler Params (Mean and Scale)
+# StandardScaler stores mean_ and scale_ (std dev)
+scaler_params = {
+    "mean": dict(zip(feature_cols, scaler.mean_.tolist())),
+    "scale": dict(zip(feature_cols, scaler.scale_.tolist()))
+}
+
+with open(f'{output_dir}/scaler_params.json', 'w') as f:
+    json.dump(scaler_params, f)
+
+# Export Song Data
+# We need the original metadata + the SCALED feature values
+songs_data = []
+df_reset = df.reset_index(drop=True)
+
+# We can use the X_scaled we already computed, but we need to map it back to the rows.
+# Since we dropped NAs and reset index, X_scaled corresponds to df_reset.
+# However, X_scaled was split into train/test. We need the FULL dataset scaled.
+# Let's re-scale the full X to be sure (or just use transform since we have the scaler)
+full_X_scaled = scaler.transform(df[feature_cols])
+
+for i, row in df_reset.iterrows():
+    song = {
+        "track_name": row['track_name'],
+        "artist(s)_name": row['artist(s)_name'],
+        "released_year": int(row['released_year']),
+        "streams": int(row['streams'])
+    }
+    
+    for j, feature in enumerate(feature_cols):
+        song[feature] = float(full_X_scaled[i][j])
+        
+    songs_data.append(song)
+
+with open(f'{output_dir}/spotify_data.json', 'w') as f:
+    json.dump(songs_data, f)
+
+print(f"Model saved to {model_path}")
+print(f"Web artifacts saved to {output_dir}/")
